@@ -70,24 +70,47 @@ def make_validation_data(data_shape=(512,256,256),
             
     return val_data, val_label
 
+# generator
+def batch_iter(images=np.array([]), # (画像数、32,256,256,1)
+               segmentation_gts=np.array([]), # (画像数、32,256,256,1)
+               crop_shape=(32,256,256),
+               steps_per_epoch=32,
+#               image_ids=np.arange(20),
+               batch_size=1,
+               ):
+        
+#    segmentation_gts = segmentation_gts.reshape(segmentation_gts.shape[:-1])
+    while True:
+        for step in range(steps_per_epoch):
+            data = np.zeros( (batch_size,)+crop_shape+(1,), dtype=np.uint8 )
+            labels = np.zeros( (batch_size,)+crop_shape+(1,), dtype=np.uint8 )
+            for count in range(batch_size):
+                image_num = np.random.randint(images.shape[0]) # 取り出す画像をランダムで決める
+                data[count], labels[count] = images[image_num], segmentation_gts[image_num]
+            yield data, labels
+    
+    
+    
 # オートエンコーダをトレーニングする関数
 def train_autoencoder(batch_size=32,
                       nb_gpus=4,
                       data_shape=(512,256,256)):
+    # setting model
     input_shape = data_shape + (1,)
     model_single_gpu = autoencoder(input_shape=input_shape)
     model = multi_gpu_model(model_single_gpu, gpus=nb_gpus)
 
+    # load mnist dataset
     (mnist_x_train, mnist_y_train), (mnist_x_test, mnist_y_test) = mnist.load_data()
     
-    # validation data を作る
+    # set validation data
     val_data,val_label = make_validation_data(data_shape=(512,256,256),
                          slices=28,
                          mnist_x_test, 
                          mnist_y_test
                          )
     
-    # training data の generator をセット
+    # set generator for training data
     train_gen = batch_iter(images=train_images,
                            segmentation_gts=train_gts, 
                            crop_shape=crop_shape,
