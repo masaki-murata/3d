@@ -71,9 +71,9 @@ def make_validation_data(data_shape=(512,256,256),
     return val_data, val_label
 
 # generator
-def batch_iter(images=np.array([]), # (画像数、32,256,256,1)
-               segmentation_gts=np.array([]), # (画像数、32,256,256,1)
-               crop_shape=(32,256,256),
+def batch_iter(mnist_x_train=np.array([]), 
+               mnist_y_train=np.array([]), 
+               data_shape=(512,256,256),
                steps_per_epoch=32,
 #               image_ids=np.arange(20),
                batch_size=1,
@@ -82,8 +82,8 @@ def batch_iter(images=np.array([]), # (画像数、32,256,256,1)
 #    segmentation_gts = segmentation_gts.reshape(segmentation_gts.shape[:-1])
     while True:
         for step in range(steps_per_epoch):
-            data = np.zeros( (batch_size,)+crop_shape+(1,), dtype=np.uint8 )
-            labels = np.zeros( (batch_size,)+crop_shape+(1,), dtype=np.uint8 )
+            data = np.zeros( (batch_size,)+data_shape+(1,), dtype=np.uint8 )
+            labels = np.zeros( (batch_size,)+data_shape+(1,), dtype=np.uint8 )
             for count in range(batch_size):
                 image_num = np.random.randint(images.shape[0]) # 取り出す画像をランダムで決める
                 data[count], labels[count] = images[image_num], segmentation_gts[image_num]
