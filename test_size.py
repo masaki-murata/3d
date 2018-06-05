@@ -13,6 +13,7 @@ from keras.datasets import mnist
 from keras.utils.training_utils import multi_gpu_model
 
 
+# define autoencoder
 def autoencoder(input_shape=(512,256,256,1)):
     input_img = Input(shape=input_shape)
     x = Conv3D(filters=8, kernel_size=(3,3,3), strides=(3,3,3), padding="same", activation="relu")(input_img)
