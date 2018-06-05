@@ -28,6 +28,7 @@ def autoencoder(input_shape=(512,256,256,1)):
     
     return model
 
+# mnist 画像を３次元に埋め込む
 def embed_mnist(mnist_image=np.array([]),
                 data_shape=(512,256,256),
                 slices=28,
@@ -39,21 +40,21 @@ def embed_mnist(mnist_image=np.array([]),
     
     return embeded
 
-def train(data_shape=(512,256,256)):
-    batch_size = 32
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
-    x_train = np.zeros((batch_size,)+data_shape)
-    x_test = np.zeros((batch_size,)+data_shape)
-    for train_id in range(batch_size):
-        x_train[train_id] = embed_mnist(mnist_image=X_train[train_id],
-                                        data_shape=(512,256,256),
-                                        slices=28)
-    for test_id in range(batch_size):
-        x_test[test_id] = embed_mnist(mnist_image=X_test[test_id],
-                                        data_shape=(512,256,256),
-                                        slices=28)
-    print(np.sum(x_train))
-    print(x_train.shape)
+#def train(data_shape=(512,256,256)):
+#    batch_size = 32
+#    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+#    x_train = np.zeros((batch_size,)+data_shape)
+#    x_test = np.zeros((batch_size,)+data_shape)
+#    for train_id in range(batch_size):
+#        x_train[train_id] = embed_mnist(mnist_image=X_train[train_id],
+#                                        data_shape=(512,256,256),
+#                                        slices=28)
+#    for test_id in range(batch_size):
+#        x_test[test_id] = embed_mnist(mnist_image=X_test[test_id],
+#                                        data_shape=(512,256,256),
+#                                        slices=28)
+#    print(np.sum(x_train))
+#    print(x_train.shape)
 
 # validation data を作成する関数
 def make_validation_data(data_shape=(512,256,256),
