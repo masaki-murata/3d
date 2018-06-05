@@ -67,26 +67,30 @@ def make_validation_data(data_shape=(512,256,256),
                 data_shape=data_shape,
                 slices=slices,
                 )
+        val_data.reshape(val_data.shape+(1,))
             
     return val_data, val_label
 
-# generator
+# generator 
 def batch_iter(mnist_x_train=np.array([]), 
                mnist_y_train=np.array([]), 
+               slices=28,
                data_shape=(512,256,256),
                steps_per_epoch=32,
-#               image_ids=np.arange(20),
                batch_size=1,
                ):
         
-#    segmentation_gts = segmentation_gts.reshape(segmentation_gts.shape[:-1])
     while True:
         for step in range(steps_per_epoch):
             data = np.zeros( (batch_size,)+data_shape+(1,), dtype=np.uint8 )
             labels = np.zeros( (batch_size,)+data_shape+(1,), dtype=np.uint8 )
             for count in range(batch_size):
-                image_num = np.random.randint(images.shape[0]) # 取り出す画像をランダムで決める
-                data[count], labels[count] = images[image_num], segmentation_gts[image_num]
+                data[count] = embed_mnist(mnist_image=mnist_x_test[count],
+                                          data_shape=data_shape,
+                                          slices=slices,
+                                          )
+                labels[count] = mnist_y_train[count]
+            data.reshape(data.shape+(1,))
             yield data, labels
     
     
@@ -128,10 +132,11 @@ def train_autoencoder(batch_size=32,
         print('Epoch %s/%s done' % (epoch, epochs))
         print("")
         
-        if epoch>0 and epoch % 1==0:
-            print(epoch)
-            model_single_gpu.save(path_to_save_model % (epoch))
-            model_single_gpu.save_weights(path_to_save_weights % (epoch))
+        # save model
+#        if epoch>0 and epoch % 1==0:
+#            print(epoch)
+#            model_single_gpu.save(path_to_save_model % (epoch))
+#            model_single_gpu.save_weights(path_to_save_weights % (epoch))
     
     
     
