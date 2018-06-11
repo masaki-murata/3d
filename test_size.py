@@ -7,11 +7,13 @@ Created on Fri Jun  1 15:05:39 2018
 
 import numpy as np
 import keras
-from keras.layers import Input, Dense, Conv3D, UpSampling3D
+from keras.layers import Input, Dense, Conv3D, UpSampling3D, Flatten
 from keras.models import Model
 from keras.datasets import mnist
 from keras.utils.training_utils import multi_gpu_model
 from keras.optimizers import Adam
+from keras.utils import np_utils
+
 
 # define autoencoder
 def autoencoder(input_shape=(512,256,256,1)):
@@ -56,6 +58,7 @@ def classifier(input_shape=(512,256,256,1)):
     x = Conv3D(filters=8, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
     x = Conv3D(filters=16, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
     x = Conv3D(filters=32, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+    x = Flatten()(x)
     x = Dense(256, activation="relu")(x)
     output = Dense(10, activation="softmax")(x)
 
@@ -187,7 +190,7 @@ def train_autoencoder(batch_size=32,
     if mode=="autoencoder":
         gts = mnist_x_test
     elif mode=="classification":
-        gts = mnist_y_test
+        gts =np_utils.to_categorical(mnist_y_test)
     val_data, val_label = make_validation_data(mnist_images=mnist_x_test,
                                                gts=gts,
                                                data_shape=data_shape,
@@ -201,7 +204,7 @@ def train_autoencoder(batch_size=32,
     if mode=="autoencoder":
         gts_train = mnist_x_train
     elif mode=="classification":
-        gts_train = mnist_y_train
+        gts_train = np_utils.to_categorical(mnist_y_train)
     train_gen = batch_iter(mnist_images_train=mnist_x_train,
                            gts_train=gts_train, 
                            slices=slices,
