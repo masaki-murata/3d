@@ -121,7 +121,8 @@ def make_validation_data(mnist_images=np.array([]), # mnist_x_test,
         elif mode=="classification":
             val_label[mnist_id] = gts[mnist_id]
     val_data = val_data.reshape(val_data.shape+(1,))
-    val_label = val_label.reshape(val_label.shape+(1,))
+    if mode=="autoencoder":
+        val_label = val_label.reshape(val_label.shape+(1,))
             
     return val_data, val_label
 
@@ -152,7 +153,8 @@ def batch_iter(mnist_images_train=np.array([]),
                 elif mode=="classification":
                     labels[count] = gts_train[count]
             data = data.reshape(data.shape+(1,))
-            labels = labels.reshape(labels.shape+(1,))
+            if mode=="autoencoder":
+                labels = labels.reshape(labels.shape+(1,))
 #            print("data.shape = ", data.shape)
             yield data, labels
     
