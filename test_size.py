@@ -64,7 +64,7 @@ def classifier(input_shape=(512,256,256,1)):
 
     model = Model(input_img, output)
     opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-    model.compile(loss='categorical_crossentropy', optimizer=opt_generator)
+    model.compile(loss='categorical_crossentropy', optimizer=opt_generator, metrics=['accuracy'])
     model.summary()
     
     return model
