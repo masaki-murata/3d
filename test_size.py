@@ -23,15 +23,16 @@ def autoencoder(input_shape=(512,256,256,1)):
     x = Conv3D(filters=4, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
     x = Conv3D(filters=8, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
     x = Conv3D(filters=16, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+#    x = Conv3D(filters=32, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
     encoded = x
     
     # decoding
     x = UpSampling3D(size=(2,2,2))(encoded)
-    decoded = Conv3D(filters=8, kernel_size=(2,2,2), padding="same", activation="relu")(x)
+    x = Conv3D(filters=8, kernel_size=(2,2,2), padding="same", activation="relu")(x)
     x = UpSampling3D(size=(2,2,2))(x)
-    decoded = Conv3D(filters=4, kernel_size=(2,2,2), padding="same", activation="relu")(x)
+    x = Conv3D(filters=4, kernel_size=(2,2,2), padding="same", activation="relu")(x)
     x = UpSampling3D(size=(2,2,2))(x)
-    decoded = Conv3D(filters=2, kernel_size=(2,2,2), padding="same", activation="relu")(x)
+    x = Conv3D(filters=2, kernel_size=(2,2,2), padding="same", activation="relu")(x)
     x = UpSampling3D(size=(2,2,2))(x)
     decoded = Conv3D(filters=1, kernel_size=(2,2,2), padding="same", activation="relu")(x)
     
