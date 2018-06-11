@@ -110,7 +110,7 @@ def make_validation_data(mnist_images=np.array([]), # mnist_x_test,
     if mode=="autoencoder":
         val_label = np.zeros(val_data.shape)
     elif mode=="classification":
-        val_label = np.zeros((val_size,))
+        val_label = np.zeros((val_size, 10))
     for mnist_id in range(val_size):
         val_data[mnist_id] = embed_mnist(mnist_image=mnist_images[mnist_id],
                 data_shape=data_shape,
