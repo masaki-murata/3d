@@ -23,11 +23,13 @@ def autoencoder(input_shape=(512,256,256,1)):
     x = Conv3D(filters=4, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
     x = Conv3D(filters=8, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
     x = Conv3D(filters=16, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
-#    x = Conv3D(filters=32, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+    x = Conv3D(filters=32, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
     encoded = x
     
     # decoding
     x = UpSampling3D(size=(2,2,2))(encoded)
+    x = Conv3D(filters=16, kernel_size=(2,2,2), padding="same", activation="relu")(x)
+    x = UpSampling3D(size=(2,2,2))(x)
     x = Conv3D(filters=8, kernel_size=(2,2,2), padding="same", activation="relu")(x)
     x = UpSampling3D(size=(2,2,2))(x)
     x = Conv3D(filters=4, kernel_size=(2,2,2), padding="same", activation="relu")(x)
@@ -46,7 +48,23 @@ def autoencoder(input_shape=(512,256,256,1)):
 
 # define classifier
 def classifier(input_shape=(512,256,256,1)):
-    aho = input_shape
+    input_img = Input(shape=input_shape)
+    
+    # encoding
+    x = Conv3D(filters=2, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(input_img)
+    x = Conv3D(filters=4, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+    x = Conv3D(filters=8, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+    x = Conv3D(filters=16, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+    x = Conv3D(filters=32, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+    x = Dense(256, activation="relu")(x)
+    output = Dense(10, activation="softmax")(x)
+
+    model = Model(input_img, output)
+    opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    model.compile(loss='categorical_crossentropy', optimizer=opt_generator)
+    model.summary()
+    
+    return model
     
 
 # mnist 画像を３次元に埋め込む
@@ -149,7 +167,10 @@ def train_autoencoder(batch_size=32,
                       ):
     # setting model
     input_shape = data_shape + (1,)
-    model_single_gpu = autoencoder(input_shape=input_shape)
+    if mode=="autoencoder":
+        model_single_gpu = autoencoder(input_shape=input_shape)
+    elif mode=="classification":
+        model_single_gpu = classifier(input_shape=input_shape)
     if nb_gpus>1:
         model = multi_gpu_model(model_single_gpu, gpus=nb_gpus)
     elif nb_gpus==1:
@@ -211,6 +232,7 @@ def train_autoencoder(batch_size=32,
 
 def main():
 #    print("aho")
+    mode = "classification"
     train_autoencoder(batch_size=1,
                       nb_gpus=1,
                       data_shape=(512,256,256),
@@ -218,7 +240,7 @@ def main():
                       steps_per_epoch=32,
                       epochs=16,
                       val_size=100,
-                      mode="autoencoder"
+                      mode=mode
                       )
     
 if __name__ == '__main__':
