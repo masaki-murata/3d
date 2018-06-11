@@ -11,22 +11,42 @@ from keras.layers import Input, Dense, Conv3D, UpSampling3D
 from keras.models import Model
 from keras.datasets import mnist
 from keras.utils.training_utils import multi_gpu_model
-
+from keras.optimizers import Adam
 
 # define autoencoder
 def autoencoder(input_shape=(512,256,256,1)):
+    # setting input shape
     input_img = Input(shape=input_shape)
-    x = Conv3D(filters=8, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(input_img)
+    
+    # encoding
+    x = Conv3D(filters=2, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(input_img)
+    x = Conv3D(filters=4, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+    x = Conv3D(filters=8, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+    x = Conv3D(filters=16, kernel_size=(2,2,2), strides=(2,2,2), padding="same", activation="relu")(x)
+    encoded = x
     
     # decoding
+    x = UpSampling3D(size=(2,2,2))(encoded)
+    decoded = Conv3D(filters=8, kernel_size=(2,2,2), padding="same", activation="relu")(x)
+    x = UpSampling3D(size=(2,2,2))(x)
+    decoded = Conv3D(filters=4, kernel_size=(2,2,2), padding="same", activation="relu")(x)
+    x = UpSampling3D(size=(2,2,2))(x)
+    decoded = Conv3D(filters=2, kernel_size=(2,2,2), padding="same", activation="relu")(x)
     x = UpSampling3D(size=(2,2,2))(x)
     decoded = Conv3D(filters=1, kernel_size=(2,2,2), padding="same", activation="relu")(x)
     
     model = Model(input_img, decoded)
-    model.compile(optimizer='adam', loss='binary_crossentropy')
+    opt_generator = Adam(lr=1e-3, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    model.compile(loss='mean_squared_error', optimizer=opt_generator)
     model.summary()
     
     return model
+
+
+# define classifier
+def classifier(input_shape=(512,256,256,1)):
+    aho = input_shape
+    
 
 # mnist 画像を３次元に埋め込む
 def embed_mnist(mnist_image=np.array([]),
@@ -57,44 +77,58 @@ def embed_mnist(mnist_image=np.array([]),
 #    print(x_train.shape)
 
 # validation data を作成する関数
-def make_validation_data(mnist_x_test,
-                         mnist_y_test,
+def make_validation_data(mnist_images=np.array([]), # mnist_x_test,
+                         gts=np.array([]), # mnist_y_test,
                          data_shape=(512,256,256),
                          slices=28,
-                         val_size=100,                          
+                         val_size=100,
+                         mode="autoencoder",                          
                          ):
     val_data = np.zeros((val_size,)+data_shape)
-    val_label = np.zeros((val_size,))
+    if mode=="autoencoder":
+        val_label = np.zeros(val_data.shape)
+    elif mode=="classification":
+        val_label = np.zeros((val_size,))
     for mnist_id in range(val_size):
-        val_data[mnist_id] = embed_mnist(mnist_image=mnist_x_test[mnist_id],
+        val_data[mnist_id] = embed_mnist(mnist_image=mnist_images[mnist_id],
                 data_shape=data_shape,
                 slices=slices,
                 )
-        val_label[mnist_id] = mnist_y_test[mnist_id]
+        if mode=="autoencoder":
+            val_label[mnist_id] = val_data[mnist_id]            
+        elif mode=="classification":
+            val_label[mnist_id] = gts[mnist_id]
     val_data = val_data.reshape(val_data.shape+(1,))
     val_label = val_label.reshape(val_label.shape+(1,))
             
     return val_data, val_label
 
 # generator 
-def batch_iter(mnist_x_train=np.array([]), 
-               mnist_y_train=np.array([]), 
+def batch_iter(mnist_images_train=np.array([]), 
+               gts_train=np.array([]), 
                slices=28,
                data_shape=(512,256,256),
                steps_per_epoch=32,
                batch_size=1,
+               mode="autoencoder",
                ):
         
     while True:
         for step in range(steps_per_epoch):
-            data = np.zeros( (batch_size,)+data_shape, dtype=np.uint8 )
-            labels = np.zeros( (batch_size,)+data_shape, dtype=np.uint8 )
+            data = np.zeros( (batch_size,)+data_shape)
+            if mode=="autoencoder":
+                labels = np.zeros(data.shape)
+            elif mode=="classification":
+                labels = np.zeros( (batch_size,),  dtype=np.uint8 )
             for count in range(batch_size):
-                data[count] = embed_mnist(mnist_image=mnist_x_train[count],
+                data[count] = embed_mnist(mnist_image=mnist_images_train[count],
                                           data_shape=data_shape,
                                           slices=slices,
                                           )
-                labels[count] = mnist_y_train[count]
+                if mode=="autoencoder":
+                    labels[count] = data[count]
+                elif mode=="classification":
+                    labels[count] = gts_train[count]
             data = data.reshape(data.shape+(1,))
             labels = labels.reshape(labels.shape+(1,))
 #            print("data.shape = ", data.shape)
@@ -110,6 +144,7 @@ def train_autoencoder(batch_size=32,
                       steps_per_epoch=32,
                       epochs=64,
                       val_size=100,
+                      mode="autoencoder",
                       ):
     # setting model
     input_shape = data_shape + (1,)
@@ -127,21 +162,31 @@ def train_autoencoder(batch_size=32,
 #    (mnist_x_train, mnist_y_train), (mnist_x_test, mnist_y_test) = mnist.load_data()
     
     # set validation data
-    val_data, val_label = make_validation_data(mnist_x_test=mnist_x_test,
-                                              mnist_y_test=mnist_y_test,
-                                              data_shape=data_shape,
-                                              slices=slices,
-                                              val_size=val_size,
-                                              )
+    if mode=="autoencoder":
+        gts = mnist_x_test
+    elif mode=="classification":
+        gts = mnist_y_test
+    val_data, val_label = make_validation_data(mnist_images=mnist_x_test,
+                                               gts=gts,
+                                               data_shape=data_shape,
+                                               slices=slices,
+                                               val_size=val_size,
+                                               mode=mode,
+                                               )
     print("val_data.shape = ", val_data.shape)
     
     # set generator for training data
-    train_gen = batch_iter(mnist_x_train=mnist_x_train,
-                           mnist_y_train=mnist_y_train, 
+    if mode=="autoencoder":
+        gts_train = mnist_x_train
+    elif mode=="classification":
+        gts_train = mnist_y_train
+    train_gen = batch_iter(mnist_images_train=mnist_x_train,
+                           gts_train=gts_train, 
                            slices=slices,
                            data_shape=data_shape,
                            steps_per_epoch=steps_per_epoch,
                            batch_size=batch_size,
+                           mode=mode,
                            )
     
     # for ループで 1 epoch ずつ学習
@@ -170,8 +215,9 @@ def main():
                       data_shape=(512,256,256),
                       slices=28,
                       steps_per_epoch=32,
-                      epochs=64,
+                      epochs=16,
                       val_size=100,
+                      mode="autoencoder"
                       )
     
 if __name__ == '__main__':
