@@ -153,7 +153,7 @@ def batch_iter(mnist_images_train=np.array([]),
                 if mode=="autoencoder":
                     labels[count] = data[count]
                 elif mode=="classification":
-                    labels[count] = gts_train[count]
+                    labels[count] = gts_train[image_id]
             data = data.reshape(data.shape+(1,))
             if mode=="autoencoder":
                 labels = labels.reshape(labels.shape+(1,))
