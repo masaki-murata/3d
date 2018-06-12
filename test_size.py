@@ -244,7 +244,7 @@ def main():
                       nb_gpus=1,
                       data_shape=(512,256,256),
                       slices=28,
-                      steps_per_epoch=32,
+                      steps_per_epoch=256,
                       epochs=16,
                       val_size=100,
                       mode=mode
