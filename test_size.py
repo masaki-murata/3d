@@ -142,7 +142,7 @@ def batch_iter(mnist_images_train=np.array([]),
             if mode=="autoencoder":
                 labels = np.zeros(data.shape)
             elif mode=="classification":
-                labels = np.zeros( (batch_size, 10),  dtype=np.uint8 )
+                labels = np.zeros( (batch_size, 10) )
             image_ids = np.random.randint(len(mnist_images_train), size=batch_size)
             for count in range(batch_size):
                 image_id = image_ids[count]
