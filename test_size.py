@@ -223,7 +223,7 @@ def train_autoencoder(batch_size=32,
         model.fit_generator(train_gen,
                             steps_per_epoch=steps_per_epoch,
                             epochs=1,
-#                            validation_data=(val_data,val_label)
+                            validation_data=(val_data,val_label)
                             )
         print('Epoch %s/%s done' % (epoch, epochs))
         print("")
