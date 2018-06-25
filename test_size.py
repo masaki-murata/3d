@@ -240,7 +240,7 @@ def train_autoencoder(batch_size=32,
 def main():
 #    print("aho")
     mode = "classification"
-    train_autoencoder(batch_size=1,
+    train_autoencoder(batch_size=16,
                       nb_gpus=1,
                       data_shape=(512,256,256),
                       slices=28,
